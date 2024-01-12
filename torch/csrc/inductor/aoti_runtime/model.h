@@ -214,14 +214,20 @@ class AOTInductorModelBase {
       size_t num_inputs,
       size_t num_outputs,
       size_t num_constants,
+      std::optional<std::string> device_str,
       std::optional<std::string> cubin_dir)
       : inputs_info_(num_inputs),
         outputs_info_(num_outputs),
         constants_info_(num_constants),
         cubin_dir_(cubin_dir),
+        device_str_(device_str),
         device_idx_(-1) {
 #ifdef USE_CUDA
-    AOTI_RUNTIME_DEVICE_CHECK(cudaGetDevice(&device_idx_));
+    if (device_str.has_value() && device_str->rfind("cuda:", 0) == 0) {
+      device_idx_ = stoi(device_str->substr(5));
+    } else {
+      AOTI_RUNTIME_DEVICE_CHECK(cudaGetDevice(&device_idx_));
+    }
 #endif // USE_CUDA
   }
 
@@ -547,6 +553,7 @@ class AOTInductorModelBase {
 #endif
 
   // Generated model uses this device index to create CUDA guards.
+  const std::optional<std::string> device_str_;
   int device_idx_;
 };
 
@@ -559,9 +566,10 @@ class AOTInductorModelKernelsBase {
 class AOTInductorModel : public AOTInductorModelBase<AOTInductorModel> {
  public:
   AOTInductorModel(
-      std::shared_ptr<ConstantMap>,
-      std::shared_ptr<std::vector<ConstantHandle>>,
-      std::optional<std::string>);
+      std::shared_ptr<ConstantMap> constants_map,
+      std::shared_ptr<std::vector<ConstantHandle>> constants_array,
+      std::optional<std::string> device_str,
+      std::optional<std::string> cubin_dir);
 
   void run_impl(
       AtenTensorHandle*
@@ -583,9 +591,10 @@ class AOTInductorModel : public AOTInductorModelBase<AOTInductorModel> {
   static std::unique_ptr<AOTInductorModel> Create(
       std::shared_ptr<ConstantMap> constants_map,
       std::shared_ptr<std::vector<ConstantHandle>> constants_array,
+      std::optional<std::string> device_str,
       std::optional<std::string> cubin_dir) {
     return std::make_unique<AOTInductorModel>(
-        std::move(constants_map), std::move(constants_array), cubin_dir);
+        std::move(constants_map), std::move(constants_array), device_str, cubin_dir);
   }
 
  private:

@@ -49,7 +49,7 @@ extern "C" {
 AOTIRuntimeError AOTInductorModelContainerCreate(
     AOTInductorModelContainerHandle* container_handle,
     size_t num_models,
-    bool is_cpu,
+    const char* device_str,
     const char* cubin_dir) {
   if (num_models == 0) {
     std::cerr << "Error: num_models must be positive, but got 0" << std::endl;
@@ -60,8 +60,12 @@ AOTIRuntimeError AOTInductorModelContainerCreate(
     if (cubin_dir != nullptr) {
       cubin_dir_opt.emplace(cubin_dir);
     }
+    std::optional<std::string> device_str_opt;
+    if (device_str != nullptr) {
+      device_str_opt.emplace(device_str);
+    }
     auto* container = new torch::aot_inductor::AOTInductorModelContainer(
-        num_models, is_cpu, cubin_dir_opt);
+        num_models, device_str_opt, cubin_dir_opt);
     *container_handle =
         reinterpret_cast<AOTInductorModelContainerHandle>(container);
   })
@@ -247,6 +251,7 @@ AOTIRuntimeError AOTInductorModelCreate(
       auto model = new torch::aot_inductor::AOTInductorModel(
           constant_map,
           constant_array,
+          "", // device_str
           ""
       );
 

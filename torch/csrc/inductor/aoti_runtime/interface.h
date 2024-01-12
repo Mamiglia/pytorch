@@ -49,7 +49,7 @@ using AOTInductorConstantMapHandle = AOTInductorConstantMap*;
 AOTIRuntimeError AOTInductorModelContainerCreate(
     AOTInductorModelContainerHandle* container_handle,
     size_t num_models,
-    bool is_cpu,
+    const char* device_str,
     const char* cubin_dir);
 
 // Deletes the AOTInductor model container.

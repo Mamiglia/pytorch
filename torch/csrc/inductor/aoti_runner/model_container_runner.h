@@ -43,7 +43,7 @@ class TORCH_API AOTIModelContainerRunner {
   AOTIModelContainerRunner(
       const std::string& model_so_path,
       size_t num_models,
-      bool is_cpu,
+      const std::string& device_str,
       const std::string& cubin_dir);
 
   std::unique_ptr<at::DynamicLibrary> model_so_;
